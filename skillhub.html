@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillHub Pro | Learning & Notes 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@500;700&display=swap');
+        body { 
+            background-color: #f8fafc; 
+            font-family: 'Inter', sans-serif; 
+            color: #1e293b; 
+        }
+        .title-font { font-family: 'Space Grotesk', sans-serif; }
+        .glass { 
+            background: rgba(255,255,255,0.7); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255,255,255,0.4); 
+        }
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(15,23,42,0.9); 
+            z-index: 1000; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 1.5rem; 
+        }
+        .onenote-editor { 
+            background-image: linear-gradient(#e2e8f0 1.1px, transparent 1.1px); 
+            background-size: 100% 1.5rem; 
+            line-height: 1.5rem; 
+            outline: none; 
+        }
+        .course-card { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .course-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); 
+        }
+        .nav-btn { 
+            transition: all 0.2s ease; 
+        }
+        .nav-btn.active { 
+            background: white; 
+            color: #4f46e5; 
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); 
+        }
+        #media-container iframe, 
+        #media-container video, 
+        #media-container img { 
+            width: 100% !important; 
+            height: 100% !important; 
+            object-fit: contain; 
+        }
+        .continue-card { 
+            background: linear-gradient(135deg, #4f46e5, #7c3aed); 
+            color: white; 
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10 lg:p-16">
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="modal-overlay">
+        <div class="w-full max-w-[1100px] bg-white rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div class="bg-slate-900 text-white p-6 flex justify-between items-center">
+                <div>
+                    <span class="text-blue-400 font-bold text-sm tracking-widest">2026.SKILLHUB</span>
+                    <h2 class="text-2xl font-black title-font">SYSTEM_CONSOLE_V4.0</h2>
+                </div>
+                <button onclick="closeAdminModal()" class="text-red-500 text-3xl font-bold">×</button>
+            </div>
+            <div class="flex">
+                <div class="w-1/2 p-8 border-r">
+                    <h3 class="text-lg font-bold mb-6">1. COURSE MANAGEMENT</h3>
+                    <div id="admin-course-list" class="space-y-3 mb-8"></div>
+                    <input id="new-course-name" type="text" placeholder="New Course Name..." class="w-full p-4 border border-slate-200 rounded-2xl">
+                    <button onclick="createNewCourse()" class="mt-4 w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">CREATE NEW PATH</button>
+                </div>
+                <div class="w-1/2 p-8">
+                    <h3 class="text-lg font-bold mb-4">2. MODULES FOR: <span id="selected-course-name" class="text-indigo-600">Select Course</span></h3>
+                    <div id="existing-modules-list" class="space-y-3 mb-8 max-h-80 overflow-auto"></div>
+                    <div class="border-t pt-6">
+                        <h4 class="font-bold text-sm mb-4 text-slate-500" id="module-form-title">ADD NEW MODULE</h4>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <input id="new-module-title" type="text" placeholder="Module Title" class="p-4 border border-slate-200 rounded-2xl">
+                            <input id="new-module-media" type="text" placeholder="YouTube / MP4 / Image URL" class="p-4 border border-slate-200 rounded-2xl">
+                        </div>
+                        <div class="mb-6">
+                            <p class="text-xs uppercase tracking-widest text-slate-500 mb-3">TEST QUESTIONS (Optional)</p>
+                            <div id="qa-list" class="space-y-2 max-h-48 overflow-auto bg-slate-50 p-4 rounded-2xl"></div>
+                            <button onclick="addTestQuestion()" class="mt-3 text-indigo-600 hover:text-indigo-700 text-sm font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> ADD QUESTION
+                            </button>
+                        </div>
+                        <button onclick="saveModule()" id="save-module-btn" class="w-full bg-slate-900 hover:bg-indigo-700 text-white py-5 rounded-2xl font-bold">DEPLOY NEW MODULE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDY MODAL -->
+    <div id="study-modal" class="modal-overlay">
+        <div class="w-full max-w-[95vw] h-[90vh] bg-white rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row">
+            <div class="flex-[1.5] bg-slate-950 flex flex-col relative">
+                <div class="absolute top-4 left-4 z-20">
+                    <button onclick="closeLesson()" class="bg-white/10 hover:bg-red-500 text-white p-2 px-5 rounded-xl backdrop-blur-md transition-all text-xs font-bold">
+                        <i class="fa-solid fa-xmark mr-2"></i>CLOSE LESSON
+                    </button>
+                </div>
+                <div id="media-container" class="flex-1 flex items-center justify-center overflow-hidden bg-black"></div>
+                <div class="p-6 bg-slate-900 border-t border-white/10">
+                    <h2 id="current-lesson-title" class="text-white font-bold text-xl truncate">Loading...</h2>
+                </div>
+            </div>
+            <div class="flex-1 flex flex-col bg-white border-l border-slate-100">
+                <div class="p-5 border-b flex justify-between items-center bg-slate-50/50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                            <i class="fa-solid fa-file-pen text-xs"></i>
+                        </div>
+                        <span class="font-bold text-sm tracking-tight uppercase">Session Notes</span>
+                    </div>
+                    <div id="save-indicator" class="text-xs font-bold text-emerald-500 flex items-center gap-2">
+                        <i class="fa-solid fa-cloud-check"></i> READY
+                    </div>
+                </div>
+                <textarea id="onenote-textarea" class="onenote-editor flex-1 p-8 text-slate-700 font-medium resize-none overflow-y-auto" placeholder="Start typing your notes here..." oninput="autoSaveNotes()"></textarea>
+                <div class="p-4 border-t bg-white flex justify-between items-center gap-3">
+                    <button onclick="downloadNoteFile()" class="text-indigo-600 text-xs font-bold hover:underline flex items-center gap-1">
+                        <i class="fa-solid fa-download"></i> EXPORT (.TXT)
+                    </button>
+                    <button onclick="manualSaveNotes()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-2xl text-sm font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> SAVE NOTES
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profile-modal" class="modal-overlay">
+        <div class="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl relative">
+            <button onclick="closeProfileModal()" class="absolute top-6 right-6 text-3xl text-slate-400 hover:text-red-500">×</button>
+            <h3 class="text-2xl font-black title-font mb-6">My Account</h3>
+            <div class="space-y-6">
+                <div><p class="text-xs uppercase font-bold text-slate-400 mb-1">EMAIL</p><p id="profile-email" class="font-semibold text-lg text-slate-800"></p></div>
+                <div><p class="text-xs uppercase font-bold text-slate-400 mb-1">ROLE</p><p id="profile-role" class="font-semibold text-lg text-slate-800"></p></div>
+                <div><p class="text-xs uppercase font-bold text-slate-400 mb-1">PASSWORD</p><p id="profile-password" class="font-semibold text-lg text-slate-800 font-mono"></p></div>
+            </div>
+            <button onclick="changePassword()" class="mt-8 w-full bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl font-bold">CHANGE PASSWORD</button>
+            <button onclick="handleLogout()" class="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-2xl font-bold">LOGOUT</button>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-16">
+            <div>
+                <h1 class="text-5xl font-black title-font tracking-tighter text-slate-900">
+                    SKILL<span class="text-indigo-600">HUB</span><span class="text-indigo-400 font-light">PRO</span>
+                </h1>
+                <p class="text-slate-400 font-medium mt-1">2026 Academic Learning Environment</p>
+            </div>
+            <nav class="flex items-center gap-1 bg-slate-200/50 p-1.5 rounded-2xl border border-slate-200 backdrop-blur-md">
+                <button onclick="navigate('home-view')" id="nav-home" class="nav-btn active px-6 py-2.5 rounded-xl text-xs font-black transition-all text-slate-600 uppercase">Dashboard</button>
+                <button onclick="navigate('notes-view')" id="nav-notes" class="nav-btn px-6 py-2.5 rounded-xl text-xs font-black transition-all text-slate-600 uppercase">Notes</button>
+            </nav>
+            <div class="glass p-6 rounded-3xl flex items-center gap-6 shadow-sm">
+                <div class="text-right">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Learning Mastery</span>
+                    <span id="mastery-percent" class="text-5xl font-black text-indigo-600 leading-none">0%</span>
+                </div>
+                <div onclick="showProfile()" class="w-10 h-10 rounded-full bg-slate-800 border-2 border-white flex items-center justify-center text-white text-xs cursor-pointer hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex justify-end mb-6">
+            <button onclick="showAdminConsole()" id="admin-btn" class="hidden bg-slate-900 hover:bg-indigo-600 text-white px-8 py-3 rounded-2xl text-sm font-bold flex items-center gap-2">
+                <i class="fa-solid fa-terminal"></i> ADMIN CONSOLE
+            </button>
+        </div>
+
+        <section id="home-view" class="view-section">
+            <div id="continue-learning-card" class="hidden mb-10">
+                <div onclick="resumeLastLesson()" class="continue-card p-8 rounded-3xl cursor-pointer flex flex-col md:flex-row items-center justify-between gap-6 hover:scale-[1.02] transition-all">
+                    <div class="flex items-center gap-5">
+                        <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-4xl">🔥</div>
+                        <div>
+                            <p class="uppercase text-indigo-200 text-xs font-bold tracking-widest">Continue Learning</p>
+                            <h3 id="continue-course-name" class="text-2xl font-black">Course Name</h3>
+                            <p id="continue-module-name" class="text-white/90">Module Title</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p id="continue-last-accessed" class="text-xs text-white/70 mb-1">Last accessed • Just now</p>
+                        <button class="bg-white text-indigo-700 px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-amber-300 transition-colors">
+                            <i class="fa-solid fa-play"></i> RESUME NOW
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-shapes text-indigo-600"></i> My Learning Paths
+            </h2>
+            <div id="course-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </section>
+
+        <section id="notes-view" class="view-section hidden">
+            <h2 class="text-2xl font-bold mb-8 text-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-file-lines text-indigo-600"></i> My Note Library
+            </h2>
+            <div id="notes-library-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <section id="detail-view" class="view-section hidden">
+            <button onclick="navigate('home-view')" class="mb-10 flex items-center gap-2 text-indigo-600 font-bold hover:translate-x-[-5px] transition-transform">
+                <i class="fa-solid fa-chevron-left"></i> Back to Dashboard
+            </button>
+            <div class="mb-12">
+                <h2 id="active-skill-name" class="text-5xl font-black title-font mb-4">Course Details</h2>
+                <div class="flex items-center gap-4">
+                    <div class="h-2 w-64 bg-slate-200 rounded-full overflow-hidden">
+                        <div id="skill-progress-bar" class="h-full bg-indigo-600 transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <span id="skill-progress-label" class="text-sm font-bold text-slate-400">0% COMPLETE</span>
+                </div>
+            </div>
+            <div id="module-grid" class="space-y-4"></div>
+        </section>
+    </div>
+
+    <!-- ==================== FULL SCRIPT WITH FIXED YOUTUBE ==================== -->
+    <script>
+        let currentUserEmail = null;
+        let usersDB = {};
+        let globalContent = {};
+        let appState = {};
+        let currentCourse = "";
+        let currentModuleIdx = null;
+        let saveDebounceTimer = null;
+        let currentQA = [];
+        let editingModuleIndex = null;
+        let lastAccessed = null;
+
+        function initApp() {
+            currentUserEmail = localStorage.getItem('currentUser');
+            if (!currentUserEmail) return window.location.href = "loginskill.html";
+
+            usersDB = JSON.parse(localStorage.getItem('skillhub_users')) || {};
+            if (!usersDB[currentUserEmail]) {
+                usersDB[currentUserEmail] = {
+                    password: currentUserEmail === "regulabandhas@gmail.com" ? "saisandeep" : "default123",
+                    role: currentUserEmail === "regulabandhas@gmail.com" ? "Admin" : "Student",
+                    appState: { grades: {}, notes: {}, videoCompleted: {} }
+                };
+            }
+
+            globalContent = JSON.parse(localStorage.getItem('skillhub_global_content')) || {
+                courses: ["Cyber Security", "Digital Marketing"],
+                content: {
+                    "Cyber Security": [
+                        { title: "YouTube Test (Regular)", media: "https://www.youtube.com/watch?v=7LTIR2yPrUc" },
+                        { title: "Shorts Test", media: "https://youtube.com/shorts/7LTIR2yPrUc" },
+                        { title: "Direct Video", media: "https://www.w3schools.com/html/mov_bbb.mp4" }
+                    ],
+                    "Digital Marketing": []
+                }
+            };
+
+            appState = usersDB[currentUserEmail].appState || { grades: {}, notes: {}, videoCompleted: {} };
+            lastAccessed = usersDB[currentUserEmail].lastAccessed || null;
+
+            if (currentUserEmail === "regulabandhas@gmail.com") usersDB[currentUserEmail].role = "Admin";
+
+            setupAdminAccess();
+            renderDashboard();
+            updateMasteryScore();
+            renderNotesLibrary();
+            showContinueLearningCard();
+        }
+
+        function setupAdminAccess() {
+            if (currentUserEmail === "regulabandhas@gmail.com") {
+                document.getElementById('admin-btn').classList.remove('hidden');
+            }
+        }
+
+        function showContinueLearningCard() {
+            const card = document.getElementById('continue-learning-card');
+            if (!lastAccessed || !globalContent.content[lastAccessed.course]) {
+                card.classList.add('hidden');
+                return;
+            }
+            const course = lastAccessed.course;
+            const idx = lastAccessed.moduleIdx;
+            const module = globalContent.content[course][idx];
+            if (!module) {
+                card.classList.add('hidden');
+                return;
+            }
+            document.getElementById('continue-course-name').textContent = course;
+            document.getElementById('continue-module-name').textContent = module.title;
+            const timeAgo = getTimeAgo(lastAccessed.timestamp);
+            document.getElementById('continue-last-accessed').textContent = `Last accessed • ${timeAgo}`;
+            card.classList.remove('hidden');
+        }
+
+        function getTimeAgo(timestamp) {
+            if (!timestamp) return "Recently";
+            const diff = Date.now() - new Date(timestamp).getTime();
+            const minutes = Math.floor(diff / 60000);
+            if (minutes < 1) return "Just now";
+            if (minutes < 60) return `${minutes} min ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            return "Yesterday";
+        }
+
+        function resumeLastLesson() {
+            if (!lastAccessed) return;
+            currentCourse = lastAccessed.course;
+            document.getElementById('active-skill-name').innerText = currentCourse;
+            navigate('detail-view');
+            renderModuleList();
+            setTimeout(() => startLesson(lastAccessed.moduleIdx), 300);
+        }
+
+        // ==================== FIXED YOUTUBE FUNCTION (Your Requested Version + Improvements) ====================
+        function getYouTubeEmbedHTML(url) {
+            try {
+                let videoId = "";
+                url = url.trim();
+
+                // Strong regex to handle regular videos, shorts, youtu.be, embed links
+                const regExp = /(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/)([^"&?\/\s]{11})/;
+                const match = url.match(regExp);
+
+                if (match && match[1]) {
+                    videoId = match[1];
+                } else {
+                    throw "Invalid URL";
+                }
+
+                return `
+                <iframe
+                    src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    style="width:100%; height:100%; border-radius:12px;">
+                </iframe>`;
+            } catch (e) {
+                // Your requested fallback with "Open in YouTube" link
+                return `
+                <div style="color:white; text-align:center; padding:50px;">
+                    ❌ Cannot embed video<br><br>
+                    <a href="${url}" target="_blank"
+                    style="color:yellow; text-decoration:underline;">
+                        ▶ Open in YouTube
+                    </a>
+                </div>`;
+            }
+        }
+
+        function startLesson(idx) {
+            currentModuleIdx = idx;
+            const module = globalContent.content[currentCourse]?.[idx];
+            if (!module) return alert("Module not found!");
+
+            lastAccessed = {
+                course: currentCourse,
+                moduleIdx: idx,
+                timestamp: new Date().toISOString()
+            };
+            usersDB[currentUserEmail].lastAccessed = lastAccessed;
+            localStorage.setItem('skillhub_users', JSON.stringify(usersDB));
+
+            document.getElementById('current-lesson-title').innerText = module.title;
+
+            const mediaBox = document.getElementById('media-container');
+            const url = module.media || "";
+            let html = '';
+
+            if (/youtu\.be|youtube\.com/.test(url)) {
+                html = getYouTubeEmbedHTML(url);
+            }
+            else if (url.match(/\.(mp4|webm|ogg)$/i)) {
+                html = `<video controls autoplay style="max-height:100%;max-width:100%;"><source src="${url}" type="video/mp4"></video>`;
+            }
+            else if (url) {
+                html = `<img src="${url}" class="max-h-full max-w-full object-contain" alt="Material">`;
+            }
+            else {
+                html = `<div class="text-white text-center p-12 text-xl"><i class="fa-solid fa-link text-4xl mb-4"></i><br>No media available</div>`;
+            }
+
+            mediaBox.innerHTML = html;
+            document.getElementById('onenote-textarea').value = appState.notes[`${currentCourse}_${idx}`]?.content || "";
+            document.getElementById('study-modal').style.display = 'flex';
+            showContinueLearningCard();
+        }
+
+        function closeLesson() {
+            if (currentModuleIdx !== null && currentCourse) {
+                appState.videoCompleted[`${currentCourse}_${currentModuleIdx}`] = true;
+                saveDB();
+            }
+            document.getElementById('study-modal').style.display = 'none';
+            document.getElementById('media-container').innerHTML = '';
+            if (currentCourse) renderModuleList();
+            showContinueLearningCard();
+        }
+
+        // ==================== ALL OTHER FUNCTIONS (unchanged) ====================
+        function showAdminConsole() {
+            if (currentUserEmail !== "regulabandhas@gmail.com") return alert("Admin access only!");
+            document.getElementById('admin-modal').style.display = 'flex';
+            renderAdminCourseList();
+            resetModuleForm();
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').style.display = 'none';
+        }
+
+        function resetModuleForm() {
+            editingModuleIndex = null;
+            currentQA = [];
+            document.getElementById('new-module-title').value = '';
+            document.getElementById('new-module-media').value = '';
+            document.getElementById('module-form-title').textContent = "ADD NEW MODULE";
+            document.getElementById('save-module-btn').textContent = "DEPLOY NEW MODULE";
+            renderQAList();
+        }
+
+        function renderAdminCourseList() {
+            const container = document.getElementById('admin-course-list');
+            container.innerHTML = globalContent.courses.map(course => `
+                <div class="flex justify-between items-center bg-white p-5 rounded-2xl border">
+                    <span class="font-medium">${course}</span>
+                    <button onclick="editCourse('${course}'); event.stopImmediatePropagation();" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-5 py-2 rounded-xl text-sm font-bold">OPEN EDITOR</button>
+                </div>
+            `).join('');
+        }
+
+        function createNewCourse() {
+            const name = document.getElementById('new-course-name').value.trim();
+            if (!name) return alert("Enter course name");
+            if (globalContent.courses.includes(name)) return alert("Course already exists");
+            globalContent.courses.push(name);
+            globalContent.content[name] = [];
+            saveGlobalContent();
+            renderAdminCourseList();
+            document.getElementById('new-course-name').value = '';
+        }
+
+        function editCourse(course) {
+            document.getElementById('selected-course-name').textContent = course;
+            renderExistingModules();
+            resetModuleForm();
+        }
+
+        function renderExistingModules() {
+            const courseName = document.getElementById('selected-course-name').textContent;
+            const modules = globalContent.content[courseName] || [];
+            const container = document.getElementById('existing-modules-list');
+            if (modules.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 p-4 text-center">No modules yet. Add one below.</p>`;
+                return;
+            }
+            container.innerHTML = modules.map((mod, i) => `
+                <div class="bg-white p-4 rounded-2xl border flex justify-between items-center">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium truncate">${mod.title}</div>
+                        <div class="text-xs text-slate-500 truncate">${mod.media || 'No media'}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editExistingModule(${i}); event.stopImmediatePropagation();" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-xl text-sm font-bold">EDIT</button>
+                        <button onclick="deleteModule(${i}); event.stopImmediatePropagation();" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-bold">DEL</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editExistingModule(idx) {
+            const courseName = document.getElementById('selected-course-name').textContent;
+            const module = globalContent.content[courseName][idx];
+            editingModuleIndex = idx;
+            document.getElementById('new-module-title').value = module.title;
+            document.getElementById('new-module-media').value = module.media || '';
+            currentQA = module.questions ? [...module.questions] : [];
+            document.getElementById('module-form-title').textContent = "EDITING MODULE";
+            document.getElementById('save-module-btn').textContent = "UPDATE MODULE";
+            renderQAList();
+        }
+
+        function deleteModule(idx) {
+            if (!confirm("Delete this module?")) return;
+            const courseName = document.getElementById('selected-course-name').textContent;
+            globalContent.content[courseName].splice(idx, 1);
+            saveGlobalContent();
+            renderExistingModules();
+            if (currentCourse === courseName) renderModuleList();
+        }
+
+        function addTestQuestion() {
+            const q = prompt("Enter Question:");
+            const a = prompt("Enter Correct Answer:");
+            if (q && a) {
+                currentQA.push({q: q.trim(), a: a.trim()});
+                renderQAList();
+            }
+        }
+
+        function renderQAList() {
+            const container = document.getElementById('qa-list');
+            container.innerHTML = currentQA.map((item, i) => `
+                <div class="bg-white p-3 rounded-xl text-sm border flex justify-between items-center">
+                    <div><strong>Q${i+1}:</strong> ${item.q}<br><strong>A:</strong> ${item.a}</div>
+                    <button onclick="removeQA(${i}); event.stopImmediatePropagation();" class="text-red-500 font-bold">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeQA(i) {
+            currentQA.splice(i, 1);
+            renderQAList();
+        }
+
+        function saveModule() {
+            const title = document.getElementById('new-module-title').value.trim();
+            const media = document.getElementById('new-module-media').value.trim();
+            const courseName = document.getElementById('selected-course-name').textContent;
+            if (courseName === "Select Course") return alert("Please select a course first");
+            if (!title) return alert("Module title is required");
+            if (!globalContent.content[courseName]) globalContent.content[courseName] = [];
+            const moduleData = { title: title, media: media || "", questions: [...currentQA] };
+            if (editingModuleIndex !== null) {
+                globalContent.content[courseName][editingModuleIndex] = moduleData;
+                alert("✅ Module updated successfully!");
+            } else {
+                globalContent.content[courseName].push(moduleData);
+                alert("✅ New module deployed successfully!");
+            }
+            saveGlobalContent();
+            renderExistingModules();
+            resetModuleForm();
+        }
+
+        function saveGlobalContent() {
+            localStorage.setItem('skillhub_global_content', JSON.stringify(globalContent));
+            renderDashboard();
+            if (currentCourse) renderModuleList();
+        }
+
+        function manualSaveNotes() {
+            if (!currentCourse || currentModuleIdx === null) return alert("No active lesson.");
+            const content = document.getElementById('onenote-textarea').value.trim();
+            if (!content) return alert("Please write some notes.");
+            appState.notes[`${currentCourse}_${currentModuleIdx}`] = {
+                course: currentCourse,
+                moduleTitle: globalContent.content[currentCourse][currentModuleIdx].title,
+                content: content,
+                savedAt: new Date().toISOString()
+            };
+            saveDB();
+            renderNotesLibrary();
+            const indicator = document.getElementById('save-indicator');
+            indicator.innerHTML = `<i class="fa-solid fa-check-circle text-emerald-600"></i> NOTES SAVED`;
+            setTimeout(() => indicator.innerHTML = `<i class="fa-solid fa-cloud-check"></i> READY`, 1500);
+        }
+
+        function autoSaveNotes() {
+            document.getElementById('save-indicator').innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-500"></i> SAVING...`;
+            clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(manualSaveNotes, 800);
+        }
+
+        function downloadNoteFile() {
+            const note = appState.notes[`${currentCourse}_${currentModuleIdx}`];
+            if (!note) return alert("No notes to download.");
+            const blob = new Blob([note.content], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${note.course} - ${note.moduleTitle}.txt`;
+            a.click();
+        }
+
+        function startQuiz(idx) {
+            currentModuleIdx = idx;
+            const module = globalContent.content[currentCourse][idx];
+            const questions = module.questions || [];
+            let score = questions.length === 0 ? Math.floor(Math.random() * 25) + 75 : 0;
+            if (questions.length > 0) {
+                questions.forEach((q, i) => {
+                    const ans = prompt(`Q${i+1}: ${q.q}\n\nYour Answer:`);
+                    if (ans && ans.toLowerCase().trim() === q.a.toLowerCase().trim()) {
+                        score += Math.floor(100 / questions.length);
+                    }
+                });
+            }
+            appState.grades[`${currentCourse}_${idx}`] = score;
+            saveDB();
+            alert(`✅ Test Completed!\nYou scored: ${score}%`);
+            renderModuleList();
+            updateMasteryScore();
+        }
+
+        function saveDB() {
+            usersDB[currentUserEmail].appState = appState;
+            localStorage.setItem('skillhub_users', JSON.stringify(usersDB));
+            updateMasteryScore();
+        }
+
+        function updateMasteryScore() {
+            let total = 0, passed = 0;
+            Object.keys(globalContent.content || {}).forEach(course => {
+                const mods = globalContent.content[course] || [];
+                total += mods.length;
+                mods.forEach((_, i) => {
+                    if ((appState.grades[`${course}_${i}`] || 0) >= 70) passed++;
+                });
+            });
+            const percent = total ? Math.round((passed / total) * 100) : 0;
+            document.getElementById('mastery-percent').textContent = percent + '%';
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('course-container');
+            container.innerHTML = globalContent.courses.map(course => {
+                const modules = globalContent.content[course] || [];
+                const progress = modules.length ? Math.round((modules.filter((_,i) => (appState.grades[`${course}_${i}`]||0) >=70).length / modules.length) * 100) : 0;
+                return `
+                    <div onclick="openCourseDetail('${course}')" class="course-card bg-white p-10 rounded-[3rem] border border-slate-100 cursor-pointer relative overflow-hidden group">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-50 rounded-full transition-transform group-hover:scale-[3]"></div>
+                        <div class="relative z-10">
+                            <h3 class="text-2xl font-black text-slate-800 mb-2">${course}</h3>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-8">${modules.length} Lessons</p>
+                            <div class="flex justify-between items-end">
+                                <span class="text-4xl font-black text-indigo-600">${progress}%</span>
+                                <span class="text-[10px] text-slate-400 font-black mb-1">COURSE MASTERY</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openCourseDetail(name) {
+            currentCourse = name;
+            document.getElementById('active-skill-name').innerText = name;
+            navigate('detail-view');
+            renderModuleList();
+        }
+
+        function renderModuleList() {
+            const container = document.getElementById('module-grid');
+            const modules = globalContent.content[currentCourse] || [];
+            container.innerHTML = modules.map((module, i) => {
+                const score = appState.grades[`${currentCourse}_${i}`] || 0;
+                const isPassed = score >= 70;
+                const isLocked = i > 0 && (appState.grades[`${currentCourse}_${i-1}`] || 0) < 70;
+                return `
+                    <div class="glass p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 border-l-[12px] ${isPassed ? 'border-l-green-500' : 'border-l-indigo-600'} ${isLocked ? 'opacity-50 grayscale' : ''}">
+                        <div class="flex items-center gap-6">
+                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl ${isPassed ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}">
+                                ${isLocked ? '🔒' : (isPassed ? '✓' : i+1)}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg">${module.title}</h4>
+                                <div class="text-xs text-slate-500">Score: ${score}%</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="${isLocked ? "alert('Complete previous module first!')" : `startLesson(${i})`}" class="bg-slate-900 text-white px-8 py-3 rounded-2xl text-xs font-bold hover:bg-indigo-600">STUDY</button>
+                            <button onclick="${isLocked ? "alert('Complete previous module first!')" : `startQuiz(${i})`}" class="bg-indigo-50 text-indigo-600 px-8 py-3 rounded-2xl text-xs font-bold hover:bg-indigo-100">TAKE TEST</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const passed = modules.filter((_, i) => (appState.grades[`${currentCourse}_${i}`] || 0) >= 70).length;
+            const percent = modules.length ? Math.round((passed / modules.length) * 100) : 0;
+            document.getElementById('skill-progress-bar').style.width = percent + '%';
+            document.getElementById('skill-progress-label').innerText = `${percent}% COMPLETE`;
+        }
+
+        function navigate(view) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(view).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (view === 'home-view') document.getElementById('nav-home').classList.add('active');
+            else if (view === 'notes-view') document.getElementById('nav-notes').classList.add('active');
+        }
+
+        function renderNotesLibrary() {
+            const container = document.getElementById('notes-library-grid');
+            const notes = Object.values(appState.notes || {});
+            if (notes.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-16 text-slate-400">No notes saved yet.<br>Start studying!</div>`;
+                return;
+            }
+            container.innerHTML = notes.map(note => {
+                const dateStr = new Date(note.savedAt).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+                return `
+                    <div onclick="openSavedNote('${note.course}', '${note.moduleTitle}')" class="bg-white p-6 rounded-3xl border border-slate-100 cursor-pointer hover:shadow-lg transition-all">
+                        <div class="flex justify-between mb-3">
+                            <span class="text-xs font-bold text-indigo-600">${note.course}</span>
+                            <span class="text-[10px] text-slate-400">${dateStr}</span>
+                        </div>
+                        <h4 class="font-semibold text-base">${note.moduleTitle}</h4>
+                        <p class="text-sm text-slate-600 line-clamp-4">${note.content}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openSavedNote(courseName, moduleTitle) {
+            currentCourse = courseName;
+            navigate('detail-view');
+            renderModuleList();
+            const idx = globalContent.content[courseName].findIndex(m => m.title === moduleTitle);
+            if (idx !== -1) setTimeout(() => startLesson(idx), 300);
+        }
+
+        function showProfile() {
+            document.getElementById('profile-email').textContent = currentUserEmail;
+            document.getElementById('profile-role').textContent = usersDB[currentUserEmail].role || "Student";
+            document.getElementById('profile-password').textContent = usersDB[currentUserEmail].password;
+            document.getElementById('profile-modal').style.display = 'flex';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').style.display = 'none';
+        }
+
+        function changePassword() {
+            const newPass = prompt("Enter new password (minimum 4 characters):");
+            if (newPass && newPass.length >= 4) {
+                usersDB[currentUserEmail].password = newPass;
+                localStorage.setItem('skillhub_users', JSON.stringify(usersDB));
+                document.getElementById('profile-password').textContent = newPass;
+                alert("Password changed successfully!");
+            }
+        }
+
+        function handleLogout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem('currentUser');
+                window.location.href = "loginskill.html";
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
