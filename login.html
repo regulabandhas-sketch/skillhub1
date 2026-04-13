@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SkillHub - Login</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f8fafc, #e0f2fe);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-container {
+      background: white;
+      width: 380px;
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+    .logo {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 8px;
+    }
+    .logo span {
+      color: #4f46e5;
+    }
+    .tagline {
+      color: #64748b;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      margin: 10px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    .password-container {
+      position: relative;
+    }
+    .password-container input {
+      padding-right: 45px;
+    }
+    .eye-icon {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 18px;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(90deg, #4f46e5, #6366f1);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 25px 0 15px 0;
+      transition: all 0.2s;
+    }
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    }
+    .links {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0 30px 0;
+      font-size: 14px;
+    }
+    .links a {
+      color: #4f46e5;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .links a:hover {
+      text-decoration: underline;
+    }
+    .google-btn {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      border-radius: 12px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .google-btn:hover {
+      background: #f8fafc;
+    }
+    .error-msg {
+      color: #ef4444;
+      font-size: 14px;
+      margin: 10px 0;
+      display: none;
+    }
+    .modal-overlay {
+      display:none; 
+      position:fixed; 
+      inset:0; 
+      background:rgba(0,0,0,0.7); 
+      align-items:center; 
+      justify-content:center;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="logo">SKILL<span>HUB</span></div>
+    <p class="tagline">Sign in to continue your journey</p>
+    
+    <input type="email" id="email" placeholder="Email Address" />
+    
+    <div class="password-container">
+      <input type="password" id="password" placeholder="Password" />
+      <span class="eye-icon" onclick="togglePassword()">👁️</span>
+    </div>
+
+    <div id="error-msg" class="error-msg"></div>
+
+    <button class="login-btn" onclick="handleLogin()">LOGIN</button>
+
+    <div class="links">
+      <a onclick="showCreateAccount()">Create Account</a>
+      <a onclick="showForgotPassword()">Forgot Password?</a>
+    </div>
+
+    <button class="google-btn" onclick="handleGoogleLogin()">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png"
+           alt="Google" width="20" height="20">
+      Continue with Google
+    </button>
+
+    <p style="margin-top: 25px; font-size: 13px; color: #64748b;">
+      ✅ Safe & Secure Access<br>
+      ✅ Progress saved automatically
+    </p>
+  </div>
+
+  <div id="create-modal" class="modal-overlay">
+    <div style="background:white; padding:30px; border-radius:20px; width:360px; text-align:center;">
+      <h2 style="margin:0 0 20px 0;">Create New Account</h2>
+      <input type="email" id="new-email" placeholder="Email Address" />
+      <input type="password" id="new-password" placeholder="Set Password" />
+      <button onclick="createNewAccount()" style="width:100%; padding:14px; background:#4f46e5; color:white; border:none; border-radius:12px; margin-top:15px; cursor:pointer; font-weight:600;">CREATE ACCOUNT</button>
+      <button onclick="closeCreateModal()" style="width:100%; padding:12px; background:#f1f5f9; color:#475569; border:none; border-radius:12px; margin-top:8px; cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+
+  <div id="forgot-modal" class="modal-overlay">
+    <div style="background:white; padding:30px; border-radius:20px; width:360px; text-align:center;">
+      <h2 style="margin:0 0 20px 0;">Reset Password</h2>
+      <input type="email" id="forgot-email" placeholder="Enter your Email" />
+      <button onclick="resetPassword()" style="width:100%; padding:14px; background:#4f46e5; color:white; border:none; border-radius:12px; margin-bottom:10px; cursor:pointer; font-weight:600;">RESET PASSWORD</button>
+      <button onclick="closeForgotModal()" style="width:100%; padding:12px; background:#f1f5f9; color:#475569; border:none; border-radius:12px; cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    // Helper to get users from localStorage
+    function getUsers() {
+      return JSON.parse(localStorage.getItem('skillhub_users')) || {};
+    }
+
+    // Toggle Password Visibility
+    function togglePassword() {
+      const pwd = document.getElementById('password');
+      const icon = document.querySelector('.eye-icon');
+      if (pwd.type === "password") {
+        pwd.type = "text";
+        icon.textContent = "🙈";
+      } else {
+        pwd.type = "password";
+        icon.textContent = "👁️";
+      }
+    }
+
+    // Display Error Messages
+    function showError(msg) {
+      const err = document.getElementById('error-msg');
+      err.textContent = msg;
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 4000);
+    }
+
+    // Redirect to Main Page
+    function goToMain() {
+      window.location.href = "index.html";
+    }
+
+    // LOGIN LOGIC
+    function handleLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!email || !password) {
+        showError("Please enter both email and password");
+        return;
+      }
+
+      let users = getUsers();
+
+      if (!users[email]) {
+        showError("Email not found. Please create an account first.");
+        return;
+      }
+
+      if (users[email].password !== password) {
+        showError("Incorrect password. Please try again.");
+        return;
+      }
+
+      localStorage.setItem('currentUser', email);
+      goToMain(); // Redirects to index.html
+    }
+
+    // GOOGLE LOGIN LOGIC
+    function handleGoogleLogin() {
+      const googleEmail = "user@gmail.com";
+      const googlePassword = "google123";
+      let users = getUsers();
+
+      if (!users[googleEmail]) {
+        users[googleEmail] = {
+          password: googlePassword,
+          role: "Student",
+          appState: {
+            courses: ["Cyber Security", "Digital Marketing"],
+            content: {
+              "Cyber Security": [{ title: "Intro to Network Security", media: "https://www.youtube.com/watch?v=7LTIR2yPrUc" }],
+              "Digital Marketing": []
+            }
+          }
+        };
+        localStorage.setItem('skillhub_users', JSON.stringify(users));
+      }
+
+      localStorage.setItem('currentUser', googleEmail);
+      alert("✅ Logged in successfully with Google Account!");
+      goToMain(); // Redirects to index.html
+    }
+
+    // MODAL CONTROLS
+    function showCreateAccount() { document.getElementById('create-modal').style.display = 'flex'; }
+    function closeCreateModal() { document.getElementById('create-modal').style.display = 'none'; }
+    function showForgotPassword() { document.getElementById('forgot-modal').style.display = 'flex'; }
+    function closeForgotModal() { document.getElementById('forgot-modal').style.display = 'none'; }
+
+    // ACCOUNT CREATION
+    function createNewAccount() {
+      const email = document.getElementById('new-email').value.trim();
+      const password = document.getElementById('new-password').value.trim();
+
+      if (!email || !password) {
+        alert("Please fill both email and password");
+        return;
+      }
+
+      let users = getUsers();
+
+      if (users[email]) {
+        alert("This email is already registered. Please login.");
+        closeCreateModal();
+        return;
+      }
+
+      users[email] = {
+        password: password,
+        role: "Student",
+        appState: {
+          courses: ["Cyber Security", "Digital Marketing"],
+          content: {
+            "Cyber Security": [{ title: "Intro to Network Security", media: "https://www.youtube.com/watch?v=7LTIR2yPrUc" }],
+            "Digital Marketing": []
+          }
+        }
+      };
+
+      localStorage.setItem('skillhub_users', JSON.stringify(users));
+      alert("✅ Account created successfully! Logging you in...");
+      localStorage.setItem('currentUser', email);
+      goToMain(); // Redirects to index.html
+    }
+
+    // PASSWORD RESET
+    function resetPassword() {
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!email) {
+        alert("Please enter your email address");
+        return;
+      }
+
+      let users = getUsers();
+      if (!users[email]) {
+        alert("No account found with this email.");
+        return;
+      }
+
+      const newPassword = prompt("Enter your new password (minimum 4 characters):");
+      if (newPassword && newPassword.length >= 4) {
+        users[email].password = newPassword;
+        localStorage.setItem('skillhub_users', JSON.stringify(users));
+        alert("✅ Password reset successful! You can now login.");
+        closeForgotModal();
+      } else if (newPassword) {
+        alert("Password must be at least 4 characters.");
+      }
+    }
+
+    // Handle Enter Key
+    document.addEventListener('keypress', function(e) {
+      if (e.key === "Enter") handleLogin();
+    });
+  </script>
+</body>
+</html>
